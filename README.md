@@ -11,12 +11,21 @@ Rasbian dependencies:
 Installing:
 
 ```
-python3 ./setup.py install
-systemctl enable --now /path/to/chauffage.service
+pip install .
+cp kang.json /home/pi
+cp authorized.txt /home/pi
+```
+Add the administrator phone number to the `kang.json` `admins` property.
+Also add the phone numbers allowed to control the system using SMS in the `authorized.txt` file.
+
+Enable the service to be started when the raspberry pi starts:
+
+```
+systemctl enable --now $PWD/kang.service
 ```
 
 Accessing the logs:
 
 ```
-journalctl -u chauffage
+journalctl -u kang
 ```

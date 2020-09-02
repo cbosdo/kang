@@ -3,8 +3,8 @@ Description=Heating controller
 
 [Service]
 Type=exec
-WorkingDirectory=/home/pi/kang
-ExecStart=/path/to/kang
+WorkingDirectory=/home/pi/
+ExecStart=/home/pi/.local/bin/kang
 KillSignal=SIGINT
 StandardOutput=inherit
 StandardError=inherit
