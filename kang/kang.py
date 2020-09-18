@@ -432,6 +432,7 @@ def main():
                 kang.sim800.Sms(admin, message).send(sim)
             # We want to stay alive as much as possible, log errors and continue
             log.exception("Unexpected error")
+            kang.sim800.Sms(sms.number, "Une erreur est survenue. Les adminstrateurs ont été notifiés.")
 
     scheduler_thread.stop()
     scheduler_thread.join()
