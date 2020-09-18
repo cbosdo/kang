@@ -77,7 +77,7 @@ class Sms:
                 msg = msg + line
 
         log.debug('Parsing received SMS: %s', msg.decode('ascii'))
-        matcher = re.match(b'^\+CMGR: "[^"]*","([^"]+)","[^"]*","([^"]+)"\r\n([0-9A-Fa-f]+)', msg)
+        matcher = re.match(br'^\+CMGR: "[^"]*","([^"]+)","[^"]*","([^"]+)"\r\n([0-9A-Fa-f]+)', msg)
         if not matcher:
             raise IndexError()
 
@@ -103,7 +103,7 @@ def getAllSmsIds(sim):
     line = sim.readline()
     while not line.endswith(b'OK\r\n'):
         time.sleep(0.5)
-        matcher = re.match(b'^\+CMGL: ([^,]+),"[^"]*","[^"]+","[^"]*","[^"]+"\r\n', line)
+        matcher = re.match(br'^\+CMGL: ([^,]+),"[^"]*","[^"]+","[^"]*","[^"]+"\r\n', line)
         if matcher:
             messages.append(matcher.group(1).decode('ascii'))
         line = sim.readline()
@@ -122,7 +122,7 @@ def setup(dev='/dev/ttyAMA0'):
     fireATCommand(sim, 'AT+CLTS=1')  # Enable auto network time sync
     fireATCommand(sim, 'AT+CMGF=1')  # Setting text mode
     fireATCommand(sim, 'AT+CNMI=1,0,0,0,0')  # Don't get the unsolicited notifications
-    fireATCommand(sim, 'AT+CSCS="UCS2"')  # Receive all data at UCS2 
+    fireATCommand(sim, 'AT+CSCS="UCS2"')  # Receive all data at UCS2
     fireATCommand(sim, 'AT+CSMP=17,168,0,8') # Change SMS Data Coding Scheme to 8 for Unicode
     fireATCommand(sim, 'AT&W')  # Save parameters for next restart
 
