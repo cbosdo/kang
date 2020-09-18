@@ -116,7 +116,7 @@ def setup(dev='/dev/ttyAMA0'):
     @param dev: the serial device path. /dev/ttyAMA0 as default should work fine
     @return: the initialized sim handle
     """
-    sim = serial.Serial(dev, 9600)
+    sim = serial.Serial(dev, 9600, timeout=5)
     fireATCommand(sim, 'AT')
     fireATCommand(sim, 'ATE0') # Disable echo
     fireATCommand(sim, 'AT+CLTS=1')  # Enable auto network time sync
