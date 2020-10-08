@@ -204,7 +204,7 @@ def _get_date_time(matcher):
     year = int(matcher.group("year") or now.tm_year)
 
     hour = int(matcher.group("hour"))
-    minute = int(matcher.group("min") or "0") 
+    minute = int(matcher.group("min") or "0")
 
     return time.mktime((year, month, day, hour, minute, 0, 0, 1, -1))
 
@@ -227,7 +227,7 @@ def start_heating(dest, matcher=None):
     places = _get_places(matcher)
     for place in places:
         kang.relays.start(place)
-    
+
     return kang.sim800.Sms(dest, "Démarré dans {}".format(
         ", ".join(_format_places(places))
     ))
@@ -355,7 +355,7 @@ def add_authorized(dest, matcher):
         new_number = "+33{}".format(new_number.lstrip("0"))
 
     log.debug("Adding number {} to authorized".format(new_number))
-    
+
     with open(AUTH_FILE, 'r+') as auth_fd:
         all_numbers = auth_fd.readlines()
         if "{}\n".format(new_number) in all_numbers:
@@ -380,7 +380,7 @@ def remove_authorized(dest, matcher):
         number = "+{}".format(number[2:])
     if not number.startswith("+"):
         number = "+33{}".format(number.lstrip("0"))
-    
+
     log.debug("Removing number {} from authorized".format(number))
 
     with open(AUTH_FILE, 'r+') as auth_fd:
@@ -486,7 +486,7 @@ def main():
                     # Remove the message to avoid processing twice
                     # Also remove if the message triggered an error while processing
                     kang.sim800.Sms.delete(sim, idx)
-                
+
                 # How frequent do we need to check? are 15s OK?
                 time.sleep(15)
         except KeyboardInterrupt:

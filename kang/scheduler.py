@@ -19,7 +19,7 @@ class PersistedScheduler(sched.scheduler):
         the new instance.
 
         :param path: the path to the file where the events queue is persisted.
-        :param functions: list of functions to be used as actions 
+        :param functions: list of functions to be used as actions
         '''
         sched.scheduler.__init__(self, time.time, time.sleep)
         func_map = {func.__name__: func for func in functions}
@@ -103,7 +103,7 @@ class SchedulerThread(threading.Thread):
         Create a new threaded persisted scheduler instance.
 
         :param path: the path to the file where the events queue is persisted.
-        :param functions: list of functions to be used as actions 
+        :param functions: list of functions to be used as actions
         '''
         super().__init__(name="Scheduler Thread")
         self.scheduler = PersistedScheduler(path, functions)
