@@ -389,6 +389,9 @@ def process_command(sms, sim):
     for pattern, repl in ACCENTS_MAP.items():
         message = re.sub(pattern, repl, message)
 
+    # squash consecutive spaces
+    message = re.sub(" +", " ", message)
+
     for cmd in COMMANDS:
         matcher = cmd["pattern"].fullmatch(message)
         if matcher:
