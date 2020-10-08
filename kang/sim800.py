@@ -5,6 +5,7 @@ See https://stackoverflow.com/questions/49292130/raspberry-pi-python-send-sms-us
 for the raspberry pi setup to get the Serial bus working
 """
 
+import datetime
 import logging
 import re
 import serial
@@ -22,6 +23,24 @@ def fireATCommand(sim, command):
     # Reading empty line and status
     sim.readline()
     return sim.readline().strip() == b'OK'
+
+def getTime(sim):
+    """
+    Get the network time
+
+    @param sim: the SIM serial handle
+    """
+    sim.write(b'AT+CCLK?\n')
+    line = sim.readline()
+    res = None
+    while not line.endswith(b'OK\r\n'):
+        time.sleep(0.5)
+        matcher = re.match(br'^\+CCLK: "([^+]+)\+[0-9]+"\r\n', line)
+        if matcher:
+            ts = matcher.group(1).decode('ascii')
+            res = datetime.datetime.strptime(ts[:ts.find('+')], "%y/%m/%d,%H:%M:%S")
+        line = sim.readline()
+    return res
 
 def ucs2tostring(ucs2):
     """

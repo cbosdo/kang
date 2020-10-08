@@ -8,7 +8,7 @@ ExecStart=/home/pi/.local/bin/kang
 KillSignal=SIGINT
 StandardOutput=inherit
 StandardError=inherit
-User=pi
+User=root
 
 [Install]
 WantedBy=multi-user.target

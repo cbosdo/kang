@@ -11,6 +11,7 @@ import locale
 import logging
 import os.path
 import re
+import subprocess
 import sys
 import time
 
@@ -464,12 +465,28 @@ def process_command(sms, sim):
             kang.sim800.Sms(sms.number, "Commande inconnue, envoyer 'aide' pour vérifier les commandes disponibles")
 
 
+def setTime(ts):
+    """
+    Set the system time. Requires running as root
+
+    @param ts: the timestamp
+    """
+    process = subprocess.run(["date", ts.strftime("%m%d%H%M%y.%S")], capture_output=True)
+    if process.returncode != 0:
+        logging.error("Failed to set date: " + process.stderr)
+
+
 def main():
     locale.setlocale(locale.LC_ALL, 'fr_FR.utf-8')
     config = load_configuration()
     log.info("Starting")
     sim = kang.sim800.setup()
     kang.relays.setup()
+
+    # Set the time from the GSM network
+    now = kang.sim800.getTime(sim)
+    if now:
+        setTime(now)
 
     scheduler_thread.start()
 
