@@ -121,6 +121,13 @@ COMMANDS = [
         "help_group": "administrer",
     },
     {
+        "pattern": re.compile(r"^lister? les numeros autorises$", re.IGNORECASE),
+        "fn": "list_authorized",
+        "command": "Lister les numéros autorisés",
+        "help": "lister les numéros autorisés à utiliser le système",
+        "help_group": "administrer",
+    },
+    {
         "pattern": re.compile("^(?:aide|help)(?: ([a-z]+))?$", re.IGNORECASE),
         "fn": "help",
         "command": "Aide ...",
@@ -378,6 +385,36 @@ def remove_authorized(dest, matcher):
         auth_fd.write("".join(all_numbers))
         auth_fd.truncate()
     return kang.sim800.Sms(dest, "Numéro supprimé")
+
+
+def list_authorized(dest):
+    """
+    List the authorized numbers
+
+    :param dest: the number sending the command
+    :param matcher: the regexp matcher with the groups
+    """
+
+    log.debug("Listing authorized numbers")
+
+    with open(AUTH_FILE, 'r+') as auth_fd:
+        all_numbers = auth_fd.readlines()
+        messages = []
+        chunks = cut(all_numbers, 10)
+        for i, batch in enumerate(chunks):
+            message_body = ["\u25AA " + number for number in batch]
+            messages.append(
+                kang.sim800.Sms(dest,
+                    "Numéros autorisés {}/{}:\n{}".format(
+                        i + 1,
+                        len(chunks),
+                        '\n'.join(message_body)
+                    )
+                )
+            )
+        return messages
+
+    return kang.sim800.Sms(dest, "Aucun numéro autorisé")
 
 
 def process_command(sms, sim):
