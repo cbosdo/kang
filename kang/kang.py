@@ -5,6 +5,7 @@ import kang.relays
 import kang.scheduler
 import kang.sim800
 
+import datetime
 import json
 import locale
 import logging
@@ -125,6 +126,13 @@ COMMANDS = [
         "fn": "list_authorized",
         "command": "Lister les numéros autorisés",
         "help": "lister les numéros autorisés à utiliser le système",
+        "help_group": "administrer",
+    },
+    {
+        "pattern": re.compile(r"^afficher l'heure$", re.IGNORECASE),
+        "fn": "show_date",
+        "command": "Afficher l'heure",
+        "help": "Afficher la date et l'heure du système",
         "help_group": "administrer",
     },
     {
@@ -415,6 +423,14 @@ def list_authorized(dest):
         return messages
 
     return kang.sim800.Sms(dest, "Aucun numéro autorisé")
+
+
+def show_date(dest):
+    """
+    Output the current date and time of the system
+    """
+    now = datetime.datetime.now().isoformat(sep=' ', timespec='seconds')
+    return kang.sim800.Sms(dest, now)
 
 
 def process_command(sms, sim):
