@@ -407,6 +407,8 @@ def process_command(sms, sim):
             else:
                 response.send(sim)
             break
+        else:
+            kang.sim800.Sms(sms.number, "Commande inconnue, envoyer 'aide' pour vérifier les commandes disponibles")
 
 
 def main():
