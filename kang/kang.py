@@ -51,45 +51,49 @@ def load_configuration():
 
     return config
 
+ACCENTS_MAP = {
+    "[éèêë]": "e",
+    "[àâ]": "a",
+}
 
 COMMANDS = [
     {
-        "pattern": re.compile("^(?:démarrer?|allumer?) le chauffage$", re.IGNORECASE),
+        "pattern": re.compile("^(?:demarrer?|allumer?) le chauffage$", re.IGNORECASE),
         "fn": "start_heating",
         "command": "Démarrer le chauffage",
         "help": "démarre le chauffage dans l'église et le hall",
         "help_group": "démarrer",
     },
     {
-        "pattern": re.compile(r"^(?:démarrer?|allumer?) le chauffage(?: dans (?P<place>.+))? le (?P<day>[0-9]{1,2})(?:[ /](?P<month>\w+|[0-9]{1,2})(?:[ /](?P<year>20[0-9]{2}))?)? à (?P<hour>[0-9]{1,2})[h:](?:(?P<min>[0-9]{1,2}))? pendant (?P<duration>[0-9]+)h$", re.IGNORECASE),
+        "pattern": re.compile(r"^(?:demarrer?|allumer?) le chauffage(?: dans (?P<place>.+))? le (?P<day>[0-9]{1,2})(?:[ /](?P<month>\w+|[0-9]{1,2})(?:[ /](?P<year>20[0-9]{2}))?)? a (?P<hour>[0-9]{1,2})[h:](?:(?P<min>[0-9]{1,2}))? pendant (?P<duration>[0-9]+)h$", re.IGNORECASE),
         "fn": "schedule_heating",
         "command": "Démarrer le chauffage dans ... le ... à ... pendant ...h",
         "help": "Programme le chauffage",
         "help_group": "programmer",
     },
     {
-            "pattern": re.compile(r"^annuler? le chauffage(?: dans (?P<place>.+))? le (?P<day>[0-9]{1,2})(?:[ /](?P<month>\w+|[0-9]{1,2})(?:[ /](?P<year>20[0-9]{2}))?)? à (?P<hour>[0-9]{1,2})[h:](?:(?P<min>[0-9]{1,2}))? pendant (?P<duration>[0-9]+)h$", re.IGNORECASE),
+            "pattern": re.compile(r"^annuler? le chauffage(?: dans (?P<place>.+))? le (?P<day>[0-9]{1,2})(?:[ /](?P<month>\w+|[0-9]{1,2})(?:[ /](?P<year>20[0-9]{2}))?)? a (?P<hour>[0-9]{1,2})[h:](?:(?P<min>[0-9]{1,2}))? pendant (?P<duration>[0-9]+)h$", re.IGNORECASE),
         "fn": "cancel_heating",
         "command": "Annuler le chauffage dans ... le ... à ... pendant ...h",
         "help": "Annule la programmation du chauffage",
         "help_group": "programmer",
     },
     {
-        "pattern": re.compile("^(?:démarrer?|allumer?) le chauffage dans (?P<place>.+)$", re.IGNORECASE),
+        "pattern": re.compile("^(?:demarrer?|allumer?) le chauffage dans (?P<place>.+)$", re.IGNORECASE),
         "fn": "start_heating",
         "command": "Démarrer le chauffage dans ...",
         "help": "démarre le chauffage dans l'église ou le hall",
         "help_group": "démarrer",
     },
     {
-        "pattern": re.compile("^(?:arrêter?|[ée]teindre|[ée]teind) le chauffage$", re.IGNORECASE),
+        "pattern": re.compile("^(?:arreter?|eteindre|eteind) le chauffage$", re.IGNORECASE),
         "fn": "stop_heating",
         "command": "Arrêter le chauffage",
         "help": "arrête le chauffage dans l'église et le hall",
         "help_group": "arrêter",
     },
     {
-        "pattern": re.compile("^(?:arrêter?|[ée]teindre|[ée]teind) le chauffage dans (?P<place>.+)$", re.IGNORECASE),
+        "pattern": re.compile("^(?:arreter?|eteindre|eteind) le chauffage dans (?P<place>.+)$", re.IGNORECASE),
         "fn": "stop_heating",
         "command": "Arrêter le chauffage dans ...",
         "help": "arrête le chauffage dans l'église ou dans le hall",
@@ -103,14 +107,14 @@ COMMANDS = [
         "help_group": "programmer",
     },
     {
-        "pattern": re.compile(r"^ajouter? (\+?[0-9. -]+) aux numéros autorisés$", re.IGNORECASE),
+        "pattern": re.compile(r"^ajouter? (\+?[0-9. -]+) aux numeros autorises$", re.IGNORECASE),
         "fn": "add_authorized",
         "command": "Ajouter 06... aux numéros autorisés",
         "help": "autorise le numéro à utiliser le système",
         "help_group": "administrer",
     },
     {
-        "pattern": re.compile(r"^supprimer? (\+?[0-9. -]+) des numéros autorisés$", re.IGNORECASE),
+        "pattern": re.compile(r"^supprimer? (\+?[0-9. -]+) des numeros autorises$", re.IGNORECASE),
         "fn": "remove_authorized",
         "command": "Supprimer 06... des numéros autorisés",
         "help": "ne plus autoriser le numéro à utiliser le système",
@@ -380,8 +384,13 @@ def process_command(sms, sim):
     """
     Process the received message and trigger the proper action
     """
+    # Replace the accented characters
+    message = sms.message.lower()
+    for pattern, repl in ACCENTS_MAP.items():
+        message = re.sub(pattern, repl, message)
+
     for cmd in COMMANDS:
-        matcher = cmd["pattern"].fullmatch(sms.message)
+        matcher = cmd["pattern"].fullmatch(message)
         if matcher:
             if cmd["pattern"].groups > 0:
                 response = globals()[cmd["fn"]](sms.number, matcher)
