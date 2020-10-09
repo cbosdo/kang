@@ -407,7 +407,7 @@ def list_authorized(dest):
     log.debug("Listing authorized numbers")
 
     with open(AUTH_FILE, 'r+') as auth_fd:
-        all_numbers = auth_fd.readlines()
+        all_numbers = [line.strip() for line in auth_fd.readlines() if line.strip() != "" and not line.startswith('#')]
         messages = []
         chunks = cut(all_numbers, 10)
         for i, batch in enumerate(chunks):
