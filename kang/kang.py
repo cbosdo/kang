@@ -64,7 +64,7 @@ COMMANDS = [
         "fn": "start_heating",
         "command": "Démarrer",
         "help": "démarre le chauffage dans l'église et le hall",
-        "help_group": "démarrer",
+        "help_group": "demarrer",
     },
     {
         "pattern": re.compile(r"^(?:demarrer?|allumer?)(?: dans (?P<place>.+))? le (?P<day>[0-9]{1,2})(?:[ /](?P<month>\w+|[0-9]{1,2})(?:[ /](?P<year>20[0-9]{2}))?)? a (?P<hour>[0-9]{1,2})[h:](?:(?P<min>[0-9]{1,2}))? pendant (?P<duration>[0-9]+)h$", re.IGNORECASE),
@@ -85,21 +85,21 @@ COMMANDS = [
         "fn": "start_heating",
         "command": "Démarrer dans ...",
         "help": "démarre le chauffage dans l'église ou le hall",
-        "help_group": "démarrer",
+        "help_group": "demarrer",
     },
     {
         "pattern": re.compile("^(?:arreter?|eteindre|eteind)$", re.IGNORECASE),
         "fn": "stop_heating",
         "command": "Arrêter",
         "help": "arrête le chauffage dans l'église et le hall",
-        "help_group": "arrêter",
+        "help_group": "arreter",
     },
     {
         "pattern": re.compile("^(?:arreter?|eteindre|eteind) dans (?P<place>.+)$", re.IGNORECASE),
         "fn": "stop_heating",
         "command": "Arrêter dans ...",
         "help": "arrête le chauffage dans l'église ou dans le hall",
-        "help_group": "arrêter",
+        "help_group": "arreter",
     },
     {
         "pattern": re.compile("^(?:programmation|lister)$", re.IGNORECASE),
@@ -164,11 +164,15 @@ def help(dest, matcher):
     """
     commands_help = {f"\u25AA Aide {cmd.get('help_group')}" for cmd in COMMANDS if cmd.get("help_group")}
     if matcher.group(1):
+        group = matcher.group(1).lower()
+        for pattern, repl in ACCENTS_MAP.items():
+            group = re.sub(pattern, repl, group)
+
         commands_help = [
             "\u25AA {}".format(cmd["command"])
             for cmd
             in COMMANDS
-            if cmd.get("help_group") == matcher.group(1)
+            if cmd.get("help_group") == group
         ]
 
     message = "Taper une des {} commandes suivantes:\n{}".format(len(commands_help), "\n".join(commands_help))
