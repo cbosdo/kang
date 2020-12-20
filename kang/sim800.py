@@ -96,9 +96,9 @@ class Sms:
                 msg = msg + line
 
         log.debug('Parsing received SMS: %s', msg.decode('ascii'))
-        matcher = re.match(br'^\+CMGR: "[^"]*","([^"]+)","[^"]*","([^"]+)"\r\n([0-9A-Fa-f]+)', msg)
+        matcher = re.search(br'\+CMGR: "[^"]*","([^"]+)","[^"]*","([^"]+)"\r\n([0-9A-Fa-f]+)', msg)
         if not matcher:
-            raise IndexError()
+            raise Exception("Failed to parse SMS: " + msg.decode('ascii'))
 
         sender = ucs2tostring(matcher.group(1))
         content = ucs2tostring(matcher.group(3))
