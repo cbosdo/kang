@@ -2,3 +2,5 @@
 build
 dist
 kang.service
+
+__pycache__

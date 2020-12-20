@@ -443,7 +443,7 @@ def process_command(sms, sim):
     Process the received message and trigger the proper action
     """
     # Replace the accented characters
-    message = sms.message.lower()
+    message = sms.message.lower().strip()
     for pattern, repl in ACCENTS_MAP.items():
         message = re.sub(pattern, repl, message)
 
