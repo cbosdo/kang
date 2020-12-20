@@ -503,6 +503,8 @@ def main():
                 try:
                     if is_authorized(sms.number):
                         process_command(sms, sim)
+                    else:
+                        log.info("Unauthorized message from " + sms.number)
                 finally:
                     # Remove the message to avoid processing twice
                     # Also remove if the message triggered an error while processing
@@ -515,7 +517,7 @@ def main():
             break
         except Exception as err:
             log.debug("admins {}".format(config.get("admins", [])))
-            message = "Erreur inattendue: veuillez consulter les logs.\n \u2023 {}".format(err)
+            message = "Erreur inattendue: veuillez consulter les logs.\n \u2023 {}: {}".format(type(err).__name__, err)
             for admin in config.get("admins", []):
                 kang.sim800.Sms(admin, message).send(sim)
             # We want to stay alive as much as possible, log errors and continue
