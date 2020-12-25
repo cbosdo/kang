@@ -450,9 +450,11 @@ def process_command(sms, sim):
     # squash consecutive spaces
     message = re.sub(" +", " ", message)
 
+    processed = False
     for cmd in COMMANDS:
         matcher = cmd["pattern"].fullmatch(message)
         if matcher:
+            processed = True
             if cmd["pattern"].groups > 0:
                 response = globals()[cmd["fn"]](sms.number, matcher)
             else:
@@ -465,8 +467,8 @@ def process_command(sms, sim):
             else:
                 response.send(sim)
             break
-        else:
-            kang.sim800.Sms(sms.number, "Commande inconnue, envoyer 'aide' pour vérifier les commandes disponibles")
+    if not processed:
+        kang.sim800.Sms(sms.number, "Commande inconnue, envoyer 'aide' pour vérifier les commandes disponibles")
 
 
 def setTime(ts):

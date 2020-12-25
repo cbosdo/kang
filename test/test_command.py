@@ -44,7 +44,7 @@ def test_start_place(mock_relays, mock_sim800, make_sms, place):
     call(not_called) not in mock_relays.start.method_calls
 
     # Test that the confirmation SMS is sent back
-    mock_sim800.Sms.assert_called_with("+33123456789", "Démarré dans " + place)
+    mock_sim800.Sms.assert_called_once_with("+33123456789", "Démarré dans " + place)
     mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)
 
 
