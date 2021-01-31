@@ -137,6 +137,13 @@ COMMANDS = [
         "help_group": "administrer",
     },
     {
+        "pattern": re.compile(r"^version$", re.IGNORECASE),
+        "fn": "version",
+        "command": "Afficher la version",
+        "help": "Afficher la version du système",
+        "help_group": "administrer",
+    },
+    {
         "pattern": re.compile("^(?:aide|help)(?: ([a-z]+))?$", re.IGNORECASE),
         "fn": "help",
         "command": "Aide ...",
@@ -147,6 +154,23 @@ COMMANDS = [
         "fn": "thanks",
     },
 ]
+
+
+def version(dest):
+    """
+    The running version of the code.
+    """
+    try:
+        version_file = open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'VERSION'))
+        version = version_file.read().strip()
+    except:
+        # Couldn't read the version file, use the last git commit id
+        process = subprocess.run(['git', 'show', '--format="format:%h"', '-s'], capture_output=True)
+        if process.returncode != 0:
+            version = "unknown version"
+        else:
+            version = process.stdout.strip()
+    return kang.sim800.Sms(dest, version)
 
 
 def thanks(dest):
