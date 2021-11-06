@@ -160,12 +160,13 @@ def version(dest):
     """
     The running version of the code.
     """
+    path = os.path.join(os.path.abspath(__file__))
     try:
-        version_file = open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'VERSION'))
+        version_file = open(os.path.join(path, 'VERSION'))
         version = version_file.read().strip()
     except:
         # Couldn't read the version file, use the last git commit id
-        process = subprocess.run(['git', 'show', '--format="format:%h"', '-s'], capture_output=True)
+        process = subprocess.run(['git', 'show', '--format=%h', '-s'], capture_output=True, cwd=path, text=True)
         if process.returncode != 0:
             version = "unknown version"
         else:
