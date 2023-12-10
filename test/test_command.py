@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
 
+import locale
+from threading import local
+from datetime import datetime, timedelta
+import time
 import kang.kang
 from unittest.mock import MagicMock, call, patch
+import pytest
+from json import dumps as _dumps
 
 @patch('kang.sim800')
 @patch('kang.relays')
@@ -110,4 +116,57 @@ def test_command_lenient(mock_relays, mock_sim800, make_sms):
 
     # Test that the confirmation SMS is sent back
     mock_sim800.Sms.assert_called_with("+33123456789", "Démarré dans l'église, le hall")
+    mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)
+
+
+def dumps_wapper(*args, **kwargs):
+    return _dumps(*args, **(kwargs | {"default": lambda obj: "mock"}))
+
+@patch('kang.sim800')
+@patch('kang.relays')
+@patch('kang.kang.scheduler_thread')
+@pytest.mark.parametrize("pattern,duration",
+        [
+            ("Démarrer le 01/02/2023 à 12:34 pendant 1h", timedelta(hours=1)),
+            ("Démarrer  le 1  février  2023  à  12  :  34  pendant  1 h", timedelta(hours=1)),
+            ("allumer le 1 février 2023 a 12h34 pendant 1:12", timedelta(hours=1, minutes=12)),
+        ]
+)
+def test_add_schedule(mock_scheduler, mock_relays, mock_sim800, make_sms, pattern, duration):
+    '''
+    Test the processing of start command with schedule under various forms
+    '''
+    mock_sim = MagicMock()
+    mock_sms = make_sms("+33123456789", pattern)
+
+    current_locale = locale.setlocale(locale.LC_ALL)
+    locale.setlocale(locale.LC_ALL, "fr_FR")
+
+    mock_relays.start = MagicMock()
+    mock_relays.start.__name__ = "start"
+    mock_relays.stop = MagicMock()
+    mock_relays.stop.__name__ = "stop"
+
+    kang.kang.process_command(mock_sms, mock_sim)
+
+    locale.setlocale(locale.LC_ALL, current_locale)
+
+    # Test that the event has been scheduled
+    start = datetime(2023, 2, 1, 12, 34)
+    start_time = start.timestamp()
+    stop_time = (start + duration).timestamp()
+
+    mock_scheduler.enterabs.assert_any_call(
+            start_time, 0, mock_relays.start, argument=(mock_relays.CHURCH,))
+    mock_scheduler.enterabs.assert_any_call(
+            start_time, 0, mock_relays.start, argument=(mock_relays.HALL,))
+    
+    mock_scheduler.enterabs.assert_any_call(
+            stop_time, 0, mock_relays.stop, argument=(mock_relays.CHURCH,))
+    mock_scheduler.enterabs.assert_any_call(
+            stop_time, 0, mock_relays.stop, argument=(mock_relays.HALL,))
+
+
+    # Test that the confirmation SMS is sent back
+    mock_sim800.Sms.assert_called_with("+33123456789", "Programmé dans l'église, le hall")
     mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)

@@ -58,6 +58,12 @@ ACCENTS_MAP = {
     "[àâ]": "a",
 }
 
+ACCENTED_MONTHS = {
+    "fevrier": "février",
+    "aout": "août",
+    "decembre": "décembre",
+}
+
 COMMANDS = [
     {
         "pattern": re.compile("^(?:demarrer?|allumer?)$", re.IGNORECASE),
@@ -67,16 +73,16 @@ COMMANDS = [
         "help_group": "demarrer",
     },
     {
-        "pattern": re.compile(r"^(?:demarrer?|allumer?)(?: dans (?P<place>.+))? le (?P<day>[0-9]{1,2})(?:[ /](?P<month>\w+|[0-9]{1,2})(?:[ /](?P<year>20[0-9]{2}))?)? a (?P<hour>[0-9]{1,2})[h:](?:(?P<min>[0-9]{1,2}))? pendant (?P<duration>[0-9]+)h$", re.IGNORECASE),
+     "pattern": re.compile(r"^(?:demarrer?|allumer?)(?: +dans +(?P<place>.+))? +le +(?P<day>[0-9]{1,2})(?:[ /]+(?P<month>\w+|[0-9]{1,2})(?:[ /]+(?P<year>20[0-9]{2}))?)? +a +(?P<hour>[0-9]{1,2}) *[h:](?: *(?P<min>[0-9]{1,2}))? +pendant +(?P<duration>[0-9]+) *[h:](?: *(?P<duration_minutes>[0-9]{1,2}))?$", re.IGNORECASE),
         "fn": "schedule_heating",
-        "command": "Démarrer dans ... le ... à ... pendant ...h",
+        "command": "Démarrer dans ... le ... à ... pendant ...h...",
         "help": "Programme le chauffage",
         "help_group": "programmer",
     },
     {
-            "pattern": re.compile(r"^annuler?(?: dans (?P<place>.+))? le (?P<day>[0-9]{1,2})(?:[ /](?P<month>\w+|[0-9]{1,2})(?:[ /](?P<year>20[0-9]{2}))?)? a (?P<hour>[0-9]{1,2})[h:](?:(?P<min>[0-9]{1,2}))? pendant (?P<duration>[0-9]+)h$", re.IGNORECASE),
+            "pattern": re.compile(r"^annuler?(?: dans (?P<place>.+))? le (?P<day>[0-9]{1,2})(?:[ /](?P<month>\w+|[0-9]{1,2})(?:[ /](?P<year>20[0-9]{2}))?)? a (?P<hour>[0-9]{1,2})[h:](?:(?P<min>[0-9]{1,2}))? pendant (?P<duration>[0-9]+) *[h:](?: *(?P<duration_minutes>[0-9]{1,2}))?$", re.IGNORECASE),
         "fn": "cancel_heating",
-        "command": "Annuler dans ... le ... à ... pendant ...h",
+        "command": "Annuler dans ... le ... à ... pendant ...h...",
         "help": "Annule la programmation du chauffage",
         "help_group": "programmer",
     },
@@ -230,7 +236,7 @@ def _get_date_time(matcher):
     try:
         month = int(month)
     except ValueError:
-        month = time.strptime(month, "%B").tm_mon
+        month = time.strptime(ACCENTED_MONTHS.get(month, month), "%B").tm_mon
     year = int(matcher.group("year") or now.tm_year)
 
     hour = int(matcher.group("hour"))
@@ -289,9 +295,10 @@ def schedule_heating(dest, matcher):
     places = _get_places(matcher)
     start_time = _get_date_time(matcher)
 
-    # Heating duration in hours
+    # Heating duration
     duration = int(matcher.group("duration"))
-    stop_time = start_time + duration * 3600
+    duration_minutes = int(matcher.group("duration_minutes") or "0")
+    stop_time = start_time + duration * 3600 + duration_minutes * 60
 
     for place in places:
         scheduler_thread.enterabs(start_time, 0, kang.relays.start, argument=(place,))
@@ -312,9 +319,10 @@ def cancel_heating(dest, matcher):
     places = _get_places(matcher)
     start_time = _get_date_time(matcher)
 
-    # Heating duration in hours
+    # Heating duration
     duration = int(matcher.group("duration"))
-    stop_time = start_time + duration * 3600
+    duration_minutes = int(matcher.group("duration_minutes") or "0")
+    stop_time = start_time + duration * 3600 + duration_minutes * 60
 
     errors = {}
     for place in places:
