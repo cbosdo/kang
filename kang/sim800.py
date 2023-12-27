@@ -95,10 +95,13 @@ class Sms:
             if line != b'\r\n' and line != b'OK\r\n':
                 msg = msg + line
 
-        log.debug('Parsing received SMS: %s', msg.decode('utf-8'))
+        try:
+            log.debug('Parsing received SMS: %s', msg.decode('ascii'))
+        except:
+            log.error('Message encoding error')
         matcher = re.search(br'\+CMGR: "[^"]*","([^"]+)","[^"]*","([^"]+)"\r\n([0-9A-Fa-f]+)', msg)
         if not matcher:
-            raise Exception("Failed to parse SMS: " + msg.decode('utf-8'))
+            raise Exception("Failed to parse SMS: " + msg.decode('ascii'))
 
         sender = ucs2tostring(matcher.group(1))
         content = ucs2tostring(matcher.group(3))
