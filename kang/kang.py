@@ -531,11 +531,12 @@ def main():
 
     ret = 0
     while True:
+        sms = None
         try:
             ids = kang.sim800.getAllSmsIds(sim)
             for idx in ids:
-                sms = kang.sim800.Sms.read(sim, idx)
                 try:
+                    sms = kang.sim800.Sms.read(sim, idx)
                     if is_authorized(sms.number):
                         process_command(sms, sim)
                     else:
