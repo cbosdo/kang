@@ -56,6 +56,18 @@ def stringtoucs2(string):
     """
     return string.encode('utf_16_be').hex().encode('ascii')
 
+
+def get_error(line):
+    """
+    @param line: line to check for error feedback
+    @return: the error code or None
+    """
+    error_header = b'+CMS ERROR:'
+    if line.startswith(error_header):
+        return line[len(error_header):].strip().decode('ascii')
+    return None
+
+
 class Sms:
     def __init__(self, dest=None, message=None):
         """
@@ -77,6 +89,10 @@ class Sms:
         # Discard the output lines
         line = sim.readline()
         while not line.endswith(b'OK\r\n'):
+            error = get_error(line)
+            if error:
+                log.error("Failed to send SMS to %s: %s", self.number, error) 
+                return
             line = sim.readline()
         log.debug('Sent')
 
@@ -92,6 +108,9 @@ class Sms:
         line = None
         while not line or not line.endswith(b'OK\r\n'):
             line = sim.readline()
+            error = get_error(line)
+            if error:
+                raise Exception("Failed to read SMS: " + error)
             if line != b'\r\n' and line != b'OK\r\n':
                 msg = msg + line
 
