@@ -11,6 +11,8 @@ import re
 import serial
 import time
 
+from kang.cms_error import CmsError
+
 log = logging.getLogger(__name__)
 
 def fireATCommand(sim, command):
@@ -64,9 +66,8 @@ def get_error(line):
     """
     error_header = b'+CMS ERROR:'
     if line.startswith(error_header):
-        return line[len(error_header):].strip().decode('ascii')
+        return CmsError(line[len(error_header):].strip().decode('ascii'))
     return None
-
 
 class Sms:
     def __init__(self, dest=None, message=None):
@@ -91,8 +92,7 @@ class Sms:
         while not line.endswith(b'OK\r\n'):
             error = get_error(line)
             if error:
-                log.error("Failed to send SMS to %s: %s", self.number, error) 
-                return
+                raise error
             line = sim.readline()
         log.debug('Sent')
 
@@ -110,7 +110,7 @@ class Sms:
             line = sim.readline()
             error = get_error(line)
             if error:
-                raise Exception("Failed to read SMS: " + error)
+                raise error
             if line != b'\r\n' and line != b'OK\r\n':
                 msg = msg + line
 

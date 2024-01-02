@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+from kang.cms_error import CmsError
 import kang.relays
 import kang.scheduler
 import kang.sim800
@@ -460,8 +461,6 @@ def list_authorized(dest):
             )
         return messages
 
-    return kang.sim800.Sms(dest, "Aucun numéro autorisé")
-
 
 def show_date(dest):
     """
@@ -495,10 +494,16 @@ def process_command(sms, sim):
 
             # Send the response SMS if needed
             if response and isinstance(response, list):
-                for messages in response:
-                    messages.send(sim)
+                for message in response:
+                    try:
+                        message.send(sim)
+                    except CmsError as err:
+                        log.error("Failed to send SMS to %s: %s", message.number, err)
             else:
-                response.send(sim)
+                try:
+                    response.send(sim)
+                except CmsError as err:
+                    log.error("Failed to send SMS to %s: %s", response.number, err)
             break
     if not processed:
         kang.sim800.Sms(sms.number, "Commande inconnue, envoyer 'aide' pour vérifier les commandes disponibles")
@@ -512,7 +517,7 @@ def setTime(ts):
     """
     process = subprocess.run(["date", ts.strftime("%m%d%H%M%y.%S")], capture_output=True)
     if process.returncode != 0:
-        logging.error("Failed to set date: " + process.stderr)
+        logging.error("Failed to set date: %s", process.stderr)
 
 
 def main():
@@ -540,7 +545,7 @@ def main():
                     if is_authorized(sms.number):
                         process_command(sms, sim)
                     else:
-                        log.info("Unauthorized message from " + sms.number)
+                        log.info("Unauthorized message from %s", sms.number)
                 finally:
                     # Remove the message to avoid processing twice
                     # Also remove if the message triggered an error while processing
@@ -555,10 +560,12 @@ def main():
             log.debug("admins {}".format(config.get("admins", [])))
             message = "Erreur inattendue: veuillez consulter les logs.\n \u2023 {}: {}".format(type(err).__name__, err)
             for admin in config.get("admins", []):
-                kang.sim800.Sms(admin, message).send(sim)
+                try:
+                    kang.sim800.Sms(admin, message).send(sim)
+                except CmsError as cms_err:
+                    log.error("Failed to send SMS to %s: %s", admin, cms_err)
             # We want to stay alive as much as possible, log errors and continue
             log.exception("Unexpected error")
-            kang.sim800.Sms(sms.number, "Une erreur est survenue. Les adminstrateurs ont été notifiés.")
 
     scheduler_thread.stop()
     scheduler_thread.join()
