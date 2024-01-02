@@ -9,12 +9,13 @@ from unittest.mock import MagicMock, call, patch
 import pytest
 from json import dumps as _dumps
 
-@patch('kang.sim800')
-@patch('kang.relays')
+
+@patch("kang.sim800")
+@patch("kang.relays")
 def test_start(mock_relays, mock_sim800, make_sms):
-    '''
+    """
     Test the processing of command Démarrer
-    '''
+    """
     mock_sim = MagicMock()
     mock_sms = make_sms("+33123456789", "Démarrer")
 
@@ -29,12 +30,12 @@ def test_start(mock_relays, mock_sim800, make_sms):
     mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)
 
 
-@patch('kang.sim800')
-@patch('kang.relays')
+@patch("kang.sim800")
+@patch("kang.relays")
 def test_start_place(mock_relays, mock_sim800, make_sms, place):
-    '''
+    """
     Test the processing of the command Démarrer in specific places
-    '''
+    """
     mock_sim = MagicMock()
     mock_sms = make_sms("+33123456789", "Démarrer dans " + place)
 
@@ -54,12 +55,12 @@ def test_start_place(mock_relays, mock_sim800, make_sms, place):
     mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)
 
 
-@patch('kang.sim800')
-@patch('kang.relays')
+@patch("kang.sim800")
+@patch("kang.relays")
 def test_stop(mock_relays, mock_sim800, make_sms):
-    '''
+    """
     Test the processing of command Arrêter
-    '''
+    """
     mock_sim = MagicMock()
     mock_sms = make_sms("+33123456789", "Arrêter")
 
@@ -74,12 +75,12 @@ def test_stop(mock_relays, mock_sim800, make_sms):
     mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)
 
 
-@patch('kang.sim800')
-@patch('kang.relays')
+@patch("kang.sim800")
+@patch("kang.relays")
 def test_stop_place(mock_relays, mock_sim800, make_sms, place):
-    '''
+    """
     Test the processing of the command Arrêter in specific places
-    '''
+    """
     mock_sim = MagicMock()
     mock_sms = make_sms("+33123456789", "Arrêter dans " + place)
 
@@ -99,12 +100,12 @@ def test_stop_place(mock_relays, mock_sim800, make_sms, place):
     mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)
 
 
-@patch('kang.sim800')
-@patch('kang.relays')
+@patch("kang.sim800")
+@patch("kang.relays")
 def test_command_lenient(mock_relays, mock_sim800, make_sms):
-    '''
+    """
     Test the processing of commands with variations of accents, added spaces, different caps
-    '''
+    """
     mock_sim = MagicMock()
     mock_sms = make_sms("+33123456789", " demarrer  ")
 
@@ -122,20 +123,30 @@ def test_command_lenient(mock_relays, mock_sim800, make_sms):
 def dumps_wapper(*args, **kwargs):
     return _dumps(*args, **(kwargs | {"default": lambda obj: "mock"}))
 
-@patch('kang.sim800')
-@patch('kang.relays')
-@patch('kang.kang.scheduler_thread')
-@pytest.mark.parametrize("pattern,duration",
-        [
-            ("Démarrer le 01/02/2023 à 12:34 pendant 1h", timedelta(hours=1)),
-            ("Démarrer  le 1  février  2023  à  12  :  34  pendant  1 h", timedelta(hours=1)),
-            ("allumer le 1 février 2023 a 12h34 pendant 1:12", timedelta(hours=1, minutes=12)),
-        ]
+
+@patch("kang.sim800")
+@patch("kang.relays")
+@patch("kang.kang.scheduler_thread")
+@pytest.mark.parametrize(
+    "pattern,duration",
+    [
+        ("Démarrer le 01/02/2023 à 12:34 pendant 1h", timedelta(hours=1)),
+        (
+            "Démarrer  le 1  février  2023  à  12  :  34  pendant  1 h",
+            timedelta(hours=1),
+        ),
+        (
+            "allumer le 1 février 2023 a 12h34 pendant 1:12",
+            timedelta(hours=1, minutes=12),
+        ),
+    ],
 )
-def test_add_schedule(mock_scheduler, mock_relays, mock_sim800, make_sms, pattern, duration):
-    '''
+def test_add_schedule(
+    mock_scheduler, mock_relays, mock_sim800, make_sms, pattern, duration
+):
+    """
     Test the processing of start command with schedule under various forms
-    '''
+    """
     mock_sim = MagicMock()
     mock_sms = make_sms("+33123456789", pattern)
 
@@ -157,16 +168,21 @@ def test_add_schedule(mock_scheduler, mock_relays, mock_sim800, make_sms, patter
     stop_time = (start + duration).timestamp()
 
     mock_scheduler.enterabs.assert_any_call(
-            start_time, 0, mock_relays.start, argument=(mock_relays.CHURCH,))
+        start_time, 0, mock_relays.start, argument=(mock_relays.CHURCH,)
+    )
     mock_scheduler.enterabs.assert_any_call(
-            start_time, 0, mock_relays.start, argument=(mock_relays.HALL,))
-    
-    mock_scheduler.enterabs.assert_any_call(
-            stop_time, 0, mock_relays.stop, argument=(mock_relays.CHURCH,))
-    mock_scheduler.enterabs.assert_any_call(
-            stop_time, 0, mock_relays.stop, argument=(mock_relays.HALL,))
+        start_time, 0, mock_relays.start, argument=(mock_relays.HALL,)
+    )
 
+    mock_scheduler.enterabs.assert_any_call(
+        stop_time, 0, mock_relays.stop, argument=(mock_relays.CHURCH,)
+    )
+    mock_scheduler.enterabs.assert_any_call(
+        stop_time, 0, mock_relays.stop, argument=(mock_relays.HALL,)
+    )
 
     # Test that the confirmation SMS is sent back
-    mock_sim800.Sms.assert_called_with("+33123456789", "Programmé dans l'église, le hall")
+    mock_sim800.Sms.assert_called_with(
+        "+33123456789", "Programmé dans l'église, le hall"
+    )
     mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)

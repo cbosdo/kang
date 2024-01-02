@@ -16,21 +16,23 @@ import subprocess
 import sys
 import time
 
-AUTH_FILE = os.path.expanduser('authorized.txt')
-CONFIG_FILE = os.path.expanduser('kang.json')
-EVENTS_FILE = os.path.expanduser('events.txt')
+AUTH_FILE = os.path.expanduser("authorized.txt")
+CONFIG_FILE = os.path.expanduser("kang.json")
+EVENTS_FILE = os.path.expanduser("events.txt")
 
 log = logging.getLogger(__name__)
 
-scheduler_thread = kang.scheduler.SchedulerThread(EVENTS_FILE, [kang.relays.start, kang.relays.stop])
+scheduler_thread = kang.scheduler.SchedulerThread(
+    EVENTS_FILE, [kang.relays.start, kang.relays.stop]
+)
 
 
 def is_authorized(sender):
     """
     @return: True if the sender is contained in the authorized file
     """
-    with open(AUTH_FILE, 'r') as auth_fd:
-        return '%s\n' % sender in auth_fd.readlines()
+    with open(AUTH_FILE, "r") as auth_fd:
+        return "%s\n" % sender in auth_fd.readlines()
 
 
 def load_configuration():
@@ -39,20 +41,24 @@ def load_configuration():
     """
     config = {}
     if os.path.isfile(CONFIG_FILE):
-        with open(CONFIG_FILE, 'r') as config_fd:
+        with open(CONFIG_FILE, "r") as config_fd:
             try:
                 config = json.loads(config_fd.read())
             except:
-                log.error('Failed to load configuration from %s', CONFIG_FILE)
+                log.error("Failed to load configuration from %s", CONFIG_FILE)
 
-    level = config.get('log_level', 'warning')
+    level = config.get("log_level", "warning")
     all_levels = [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR]
-    matching = [lvl for lvl in all_levels if logging.getLevelName(lvl).lower() == level.lower()]
+    matching = [
+        lvl for lvl in all_levels if logging.getLevelName(lvl).lower() == level.lower()
+    ]
     logging.basicConfig(
-            format='%(asctime)s:%(levelname)s:%(message)s',
-            level=matching[0] if matching else logging.WARNING)
+        format="%(asctime)s:%(levelname)s:%(message)s",
+        level=matching[0] if matching else logging.WARNING,
+    )
 
     return config
+
 
 ACCENTS_MAP = {
     "[éèêë]": "e",
@@ -74,21 +80,29 @@ COMMANDS = [
         "help_group": "demarrer",
     },
     {
-     "pattern": re.compile(r"^(?:demarrer?|allumer?)(?: +dans +(?P<place>.+))? +le +(?P<day>[0-9]{1,2})(?:[ /]+(?P<month>\w+|[0-9]{1,2})(?:[ /]+(?P<year>20[0-9]{2}))?)? +a +(?P<hour>[0-9]{1,2}) *[h:](?: *(?P<min>[0-9]{1,2}))? +pendant +(?P<duration>[0-9]+) *[h:](?: *(?P<duration_minutes>[0-9]{1,2}))?$", re.IGNORECASE),
+        "pattern": re.compile(
+            r"^(?:demarrer?|allumer?)(?: +dans +(?P<place>.+))? +le +(?P<day>[0-9]{1,2})(?:[ /]+(?P<month>\w+|[0-9]{1,2})(?:[ /]+(?P<year>20[0-9]{2}))?)? +a +(?P<hour>[0-9]{1,2}) *[h:](?: *(?P<min>[0-9]{1,2}))? +pendant +(?P<duration>[0-9]+) *[h:](?: *(?P<duration_minutes>[0-9]{1,2}))?$",
+            re.IGNORECASE,
+        ),
         "fn": "schedule_heating",
         "command": "Démarrer dans ... le ... à ... pendant ...h...",
         "help": "Programme le chauffage",
         "help_group": "programmer",
     },
     {
-            "pattern": re.compile(r"^annuler?(?: dans (?P<place>.+))? le (?P<day>[0-9]{1,2})(?:[ /](?P<month>\w+|[0-9]{1,2})(?:[ /](?P<year>20[0-9]{2}))?)? a (?P<hour>[0-9]{1,2})[h:](?:(?P<min>[0-9]{1,2}))? pendant (?P<duration>[0-9]+) *[h:](?: *(?P<duration_minutes>[0-9]{1,2}))?$", re.IGNORECASE),
+        "pattern": re.compile(
+            r"^annuler?(?: dans (?P<place>.+))? le (?P<day>[0-9]{1,2})(?:[ /](?P<month>\w+|[0-9]{1,2})(?:[ /](?P<year>20[0-9]{2}))?)? a (?P<hour>[0-9]{1,2})[h:](?:(?P<min>[0-9]{1,2}))? pendant (?P<duration>[0-9]+) *[h:](?: *(?P<duration_minutes>[0-9]{1,2}))?$",
+            re.IGNORECASE,
+        ),
         "fn": "cancel_heating",
         "command": "Annuler dans ... le ... à ... pendant ...h...",
         "help": "Annule la programmation du chauffage",
         "help_group": "programmer",
     },
     {
-        "pattern": re.compile("^(?:demarrer?|allumer?) dans (?P<place>.+)$", re.IGNORECASE),
+        "pattern": re.compile(
+            "^(?:demarrer?|allumer?) dans (?P<place>.+)$", re.IGNORECASE
+        ),
         "fn": "start_heating",
         "command": "Démarrer dans ...",
         "help": "démarre le chauffage dans l'église ou le hall",
@@ -102,7 +116,9 @@ COMMANDS = [
         "help_group": "arreter",
     },
     {
-        "pattern": re.compile("^(?:arreter?|eteindre|eteind) dans (?P<place>.+)$", re.IGNORECASE),
+        "pattern": re.compile(
+            "^(?:arreter?|eteindre|eteind) dans (?P<place>.+)$", re.IGNORECASE
+        ),
         "fn": "stop_heating",
         "command": "Arrêter dans ...",
         "help": "arrête le chauffage dans l'église ou dans le hall",
@@ -116,14 +132,18 @@ COMMANDS = [
         "help_group": "programmer",
     },
     {
-        "pattern": re.compile(r"^ajouter? (\+?[0-9. -]+) aux numeros autorises$", re.IGNORECASE),
+        "pattern": re.compile(
+            r"^ajouter? (\+?[0-9. -]+) aux numeros autorises$", re.IGNORECASE
+        ),
         "fn": "add_authorized",
         "command": "Ajouter 06... aux numéros autorisés",
         "help": "autorise le numéro à utiliser le système",
         "help_group": "administrer",
     },
     {
-        "pattern": re.compile(r"^supprimer? (\+?[0-9. -]+) des numeros autorises$", re.IGNORECASE),
+        "pattern": re.compile(
+            r"^supprimer? (\+?[0-9. -]+) des numeros autorises$", re.IGNORECASE
+        ),
         "fn": "remove_authorized",
         "command": "Supprimer 06... des numéros autorisés",
         "help": "ne plus autoriser le numéro à utiliser le système",
@@ -169,11 +189,16 @@ def version(dest):
     """
     path = os.path.join(os.path.abspath(__file__))
     try:
-        version_file = open(os.path.join(path, 'VERSION'))
+        version_file = open(os.path.join(path, "VERSION"))
         version = version_file.read().strip()
     except:
         # Couldn't read the version file, use the last git commit id
-        process = subprocess.run(['git', 'show', '--format=%h', '-s'], capture_output=True, cwd=path, text=True)
+        process = subprocess.run(
+            ["git", "show", "--format=%h", "-s"],
+            capture_output=True,
+            cwd=path,
+            text=True,
+        )
         if process.returncode != 0:
             version = "unknown version"
         else:
@@ -194,7 +219,11 @@ def help(dest, matcher):
 
     :param dest: number to send the SMS to
     """
-    commands_help = {f"\u25AA Aide {cmd.get('help_group')}" for cmd in COMMANDS if cmd.get("help_group")}
+    commands_help = {
+        f"\u25AA Aide {cmd.get('help_group')}"
+        for cmd in COMMANDS
+        if cmd.get("help_group")
+    }
     if matcher.group(1):
         group = matcher.group(1).lower()
         for pattern, repl in ACCENTS_MAP.items():
@@ -202,12 +231,13 @@ def help(dest, matcher):
 
         commands_help = [
             "\u25AA {}".format(cmd["command"])
-            for cmd
-            in COMMANDS
+            for cmd in COMMANDS
             if cmd.get("help_group") == group
         ]
 
-    message = "Taper une des {} commandes suivantes:\n{}".format(len(commands_help), "\n".join(commands_help))
+    message = "Taper une des {} commandes suivantes:\n{}".format(
+        len(commands_help), "\n".join(commands_help)
+    )
     return kang.sim800.Sms(dest, message)
 
 
@@ -265,9 +295,9 @@ def start_heating(dest, matcher=None):
     for place in places:
         kang.relays.start(place)
 
-    return kang.sim800.Sms(dest, "Démarré dans {}".format(
-        ", ".join(_format_places(places))
-    ))
+    return kang.sim800.Sms(
+        dest, "Démarré dans {}".format(", ".join(_format_places(places)))
+    )
 
 
 def stop_heating(dest, matcher=None):
@@ -281,9 +311,9 @@ def stop_heating(dest, matcher=None):
     for place in places:
         kang.relays.stop(place)
 
-    return kang.sim800.Sms(dest, "Arrêté dans {}".format(
-        ", ".join(_format_places(places))
-    ))
+    return kang.sim800.Sms(
+        dest, "Arrêté dans {}".format(", ".join(_format_places(places)))
+    )
 
 
 def schedule_heating(dest, matcher):
@@ -305,9 +335,9 @@ def schedule_heating(dest, matcher):
         scheduler_thread.enterabs(start_time, 0, kang.relays.start, argument=(place,))
         scheduler_thread.enterabs(stop_time, 0, kang.relays.stop, argument=(place,))
 
-    return kang.sim800.Sms(dest, "Programmé dans {}".format(
-        ", ".join(_format_places(places))
-    ))
+    return kang.sim800.Sms(
+        dest, "Programmé dans {}".format(", ".join(_format_places(places)))
+    )
 
 
 def cancel_heating(dest, matcher):
@@ -331,25 +361,37 @@ def cancel_heating(dest, matcher):
             scheduler_thread.cancel(start_time, kang.relays.start, argument=(place,))
         except ValueError:
             place_errors = errors.get(place, [])
-            place_errors.append(time.strftime("%d/%m/%Y %H:%M", time.localtime(start_time)))
+            place_errors.append(
+                time.strftime("%d/%m/%Y %H:%M", time.localtime(start_time))
+            )
             errors[place] = place_errors
 
         try:
             scheduler_thread.cancel(stop_time, kang.relays.stop, argument=(place,))
         except ValueError:
             place_errors = errors.get(place, [])
-            place_errors.append(time.strftime("%d/%m/%Y %H:%M", time.localtime(stop_time)))
+            place_errors.append(
+                time.strftime("%d/%m/%Y %H:%M", time.localtime(stop_time))
+            )
             errors[place] = place_errors
 
     if errors:
-        error_messages = ["\u25AA {}: {}\n".format(_format_places([place])[0], ", ".join(errors[place])) for place in errors.keys()]
-        return kang.sim800.Sms(dest, "Annulé sauf:\n{}".format(",".join(error_messages)))
+        error_messages = [
+            "\u25AA {}: {}\n".format(
+                _format_places([place])[0], ", ".join(errors[place])
+            )
+            for place in errors.keys()
+        ]
+        return kang.sim800.Sms(
+            dest, "Annulé sauf:\n{}".format(",".join(error_messages))
+        )
     return kang.sim800.Sms(dest, "Démarrage et arret annulés")
 
 
 def cut(l, n):
     n = max(1, n)
-    return [l[i:i+n] for i in range(0, len(l), n)]
+    return [l[i : i + n] for i in range(0, len(l), n)]
+
 
 def list_events(dest):
     """
@@ -368,14 +410,20 @@ def list_events(dest):
         for i, batch in enumerate(chunks):
             events_message = [
                 "\u25AA {}: {} - {}".format(
-                    time.strftime('%d/%m/%Y %H:%M', time.localtime(event.time)),
+                    time.strftime("%d/%m/%Y %H:%M", time.localtime(event.time)),
                     name_map[event.action],
-                    ''.join(_format_places(event.argument))
+                    "".join(_format_places(event.argument)),
                 )
-                for event
-                in batch
+                for event in batch
             ]
-            messages.append(kang.sim800.Sms(dest, "Programmation {}/{}:\n{}".format(i + 1, len(chunks), '\n'.join(events_message))))
+            messages.append(
+                kang.sim800.Sms(
+                    dest,
+                    "Programmation {}/{}:\n{}".format(
+                        i + 1, len(chunks), "\n".join(events_message)
+                    ),
+                )
+            )
         return messages
     return kang.sim800.Sms(dest, "Aucune programmation")
 
@@ -395,7 +443,7 @@ def add_authorized(dest, matcher):
 
     log.debug("Adding number {} to authorized".format(new_number))
 
-    with open(AUTH_FILE, 'r+') as auth_fd:
+    with open(AUTH_FILE, "r+") as auth_fd:
         all_numbers = auth_fd.readlines()
         if "{}\n".format(new_number) in all_numbers:
             return kang.sim800.Sms(dest, "Numéro déjà autorisé")
@@ -422,7 +470,7 @@ def remove_authorized(dest, matcher):
 
     log.debug("Removing number {} from authorized".format(number))
 
-    with open(AUTH_FILE, 'r+') as auth_fd:
+    with open(AUTH_FILE, "r+") as auth_fd:
         all_numbers = auth_fd.readlines()
         if "{}\n".format(number) not in all_numbers:
             return kang.sim800.Sms(dest, "Numéro déjà pas autorisé")
@@ -444,19 +492,22 @@ def list_authorized(dest):
 
     log.debug("Listing authorized numbers")
 
-    with open(AUTH_FILE, 'r+') as auth_fd:
-        all_numbers = [line.strip() for line in auth_fd.readlines() if line.strip() != "" and not line.startswith('#')]
+    with open(AUTH_FILE, "r+") as auth_fd:
+        all_numbers = [
+            line.strip()
+            for line in auth_fd.readlines()
+            if line.strip() != "" and not line.startswith("#")
+        ]
         messages = []
         chunks = cut(all_numbers, 10)
         for i, batch in enumerate(chunks):
             message_body = ["\u25AA " + number for number in batch]
             messages.append(
-                kang.sim800.Sms(dest,
+                kang.sim800.Sms(
+                    dest,
                     "Numéros autorisés {}/{}:\n{}".format(
-                        i + 1,
-                        len(chunks),
-                        '\n'.join(message_body)
-                    )
+                        i + 1, len(chunks), "\n".join(message_body)
+                    ),
                 )
             )
         return messages
@@ -466,7 +517,7 @@ def show_date(dest):
     """
     Output the current date and time of the system
     """
-    now = datetime.datetime.now().isoformat(sep=' ', timespec='seconds')
+    now = datetime.datetime.now().isoformat(sep=" ", timespec="seconds")
     return kang.sim800.Sms(dest, now)
 
 
@@ -506,7 +557,10 @@ def process_command(sms, sim):
                     log.error("Failed to send SMS to %s: %s", response.number, err)
             break
     if not processed:
-        kang.sim800.Sms(sms.number, "Commande inconnue, envoyer 'aide' pour vérifier les commandes disponibles")
+        kang.sim800.Sms(
+            sms.number,
+            "Commande inconnue, envoyer 'aide' pour vérifier les commandes disponibles",
+        )
 
 
 def setTime(ts):
@@ -515,13 +569,15 @@ def setTime(ts):
 
     @param ts: the timestamp
     """
-    process = subprocess.run(["date", ts.strftime("%m%d%H%M%y.%S")], capture_output=True)
+    process = subprocess.run(
+        ["date", ts.strftime("%m%d%H%M%y.%S")], capture_output=True
+    )
     if process.returncode != 0:
         logging.error("Failed to set date: %s", process.stderr)
 
 
 def main():
-    locale.setlocale(locale.LC_ALL, 'fr_FR.utf-8')
+    locale.setlocale(locale.LC_ALL, "fr_FR.utf-8")
     config = load_configuration()
     log.info("Starting")
     sim = kang.sim800.setup()
@@ -558,7 +614,9 @@ def main():
             break
         except Exception as err:
             log.debug("admins {}".format(config.get("admins", [])))
-            message = "Erreur inattendue: veuillez consulter les logs.\n \u2023 {}: {}".format(type(err).__name__, err)
+            message = "Erreur inattendue: veuillez consulter les logs.\n \u2023 {}: {}".format(
+                type(err).__name__, err
+            )
             for admin in config.get("admins", []):
                 try:
                     kang.sim800.Sms(admin, message).send(sim)
@@ -572,6 +630,7 @@ def main():
     kang.relays.clean()
     sim.close()
     sys.exit(ret)
+
 
 if __name__ == "__main__":
     main()
