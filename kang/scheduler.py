@@ -75,8 +75,15 @@ class PersistedScheduler(sched.scheduler):
         """
         Cancel a persisted event from the scheduler. Raises ValueError if the event isn't queued.
         """
-        sched.scheduler.cancel(self, event)
-        self.save()
+        for persisted_event in self.queue:
+            if persisted_event.time == event.time and \
+               persisted_event.priority == event.priority and \
+               persisted_event.argument[0] == event.action and \
+               persisted_event.argument[1] == event.argument and \
+               persisted_event.argument[2] == event.kwargs:
+                sched.scheduler.cancel(self, persisted_event)
+                self.save()
+                break
 
     @property
     def events(self):
