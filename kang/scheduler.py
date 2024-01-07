@@ -37,7 +37,7 @@ class PersistedScheduler(sched.scheduler):
                         float(event[0]),
                         int(event[1]),
                         func,
-                        argument=json.loads(event[3]),
+                        argument=tuple(json.loads(event[3])),
                         kwargs=json.loads(event[4]),
                     )
 

@@ -57,13 +57,13 @@ def test_persisted_scheduler_load(make_persisted_scheduler):
     assert loaded_events[0].time == 1706514300.0
     assert loaded_events[0].priority == 10
     assert loaded_events[0].action == start
-    assert loaded_events[0].argument == [1]
+    assert loaded_events[0].argument == (1,)
     assert loaded_events[0].kwargs == {"foo": "bar"}
 
     assert loaded_events[1].time == 1706517900.0
     assert loaded_events[1].priority == 10
     assert loaded_events[1].action == stop
-    assert loaded_events[1].argument == [1]
+    assert loaded_events[1].argument == (1,)
     assert loaded_events[1].kwargs == {"foo": "bar"}
 
 
@@ -72,8 +72,8 @@ def test_persisted_scheduler_save(make_persisted_scheduler):
     Test saving events in the scheduler
     '''
     scheduler = make_persisted_scheduler("")
-    scheduler.enterabs(1706514300.0, 10, start, [1], {"foo": "bar"})
-    scheduler.enterabs(1706517900.0, 10, stop, [1], {"foo": "bar"})
+    scheduler.enterabs(1706514300.0, 10, start, (1,), {"foo": "bar"})
+    scheduler.enterabs(1706517900.0, 10, stop, (1,), {"foo": "bar"})
 
     assert_event_file(EVENTS_DATA)
 
