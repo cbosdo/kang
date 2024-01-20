@@ -385,7 +385,7 @@ def cancel_heating(dest, matcher):
         return kang.sim800.Sms(
             dest, "Annulé sauf:\n{}".format(",".join(error_messages))
         )
-    return kang.sim800.Sms(dest, "Démarrage et arret annulés")
+    return kang.sim800.Sms(dest, "Démarrage et arrêt annulés")
 
 
 def cut(l, n):

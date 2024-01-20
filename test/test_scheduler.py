@@ -2,19 +2,8 @@ import pytest
 import time
 import os
 
+from test.conftest import EVENTS_FILE, start, stop
 import kang.scheduler
-
-def start():
-    '''
-    Fake start function to test the scheduler
-    '''
-
-def stop():
-    '''
-    Fake stop function to test the scheduler
-    '''
-
-EVENTS_FILE = "events.txt"
 
 EVENTS_DATA = '''1706514300.0,10,start,[1],{"foo": "bar"}
 1706517900.0,10,stop,[1],{"foo": "bar"}
@@ -33,29 +22,6 @@ def make_persisted_scheduler():
         return scheduler
 
     yield _make_scheduler
-    os.remove(EVENTS_FILE)
-
-
-@pytest.fixture
-def make_scheduler_thread():
-    """
-    Convenience fixture to easily create a scheduler thread with data
-    """
-    scheduler_thread = None
-    def _make_scheduler(data):
-        nonlocal scheduler_thread
-        with open(EVENTS_FILE, "w") as fd:
-            fd.write(data)
-
-        scheduler_thread = kang.scheduler.SchedulerThread(EVENTS_FILE, [start, stop])
-        scheduler_thread.start()
-        return scheduler_thread
-
-    yield _make_scheduler
-
-    scheduler_thread.stop()
-    scheduler_thread.join()
-
     os.remove(EVENTS_FILE)
 
 
