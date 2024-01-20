@@ -186,3 +186,24 @@ def test_add_schedule(
         "+33123456789", "Programmé dans l'église, le hall"
     )
     mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)
+
+
+@patch("kang.kang.subprocess")
+@patch("kang.sim800")
+def test_version(mock_sim800, mock_subprocess, make_sms):
+    """
+    Test the processing of command version
+    """
+    mock_sim = MagicMock()
+    mock_sms = make_sms("+33123456789", "version")
+
+    git_mock = MagicMock()
+    git_mock.returncode = 0
+    git_mock.stdout = "Fake version"
+    mock_subprocess.run.return_value = git_mock
+
+    kang.kang.process_command(mock_sms, mock_sim)
+
+    # Test that the result SMS is sent back
+    mock_sim800.Sms.assert_called_with("+33123456789", "Fake version")
+    mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)

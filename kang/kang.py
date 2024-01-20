@@ -187,7 +187,7 @@ def version(dest):
     """
     The running version of the code.
     """
-    path = os.path.join(os.path.abspath(__file__))
+    path = os.path.dirname(os.path.abspath(__file__))
     try:
         version_file = open(os.path.join(path, "VERSION"))
         version = version_file.read().strip()
