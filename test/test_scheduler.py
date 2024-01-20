@@ -26,7 +26,6 @@ def make_persisted_scheduler():
     Convenience fixture to easily create a scheduler with data
     """
     def _make_scheduler(data):
-
         with open(EVENTS_FILE, "w") as fd:
             fd.write(data)
 
@@ -35,6 +34,30 @@ def make_persisted_scheduler():
 
     yield _make_scheduler
     os.remove(EVENTS_FILE)
+
+
+@pytest.fixture
+def make_scheduler_thread():
+    """
+    Convenience fixture to easily create a scheduler thread with data
+    """
+    scheduler_thread = None
+    def _make_scheduler(data):
+        nonlocal scheduler_thread
+        with open(EVENTS_FILE, "w") as fd:
+            fd.write(data)
+
+        scheduler_thread = kang.scheduler.SchedulerThread(EVENTS_FILE, [start, stop])
+        scheduler_thread.start()
+        return scheduler_thread
+
+    yield _make_scheduler
+
+    scheduler_thread.stop()
+    scheduler_thread.join()
+
+    os.remove(EVENTS_FILE)
+
 
 def assert_event_file(expected):
     '''
@@ -88,4 +111,17 @@ def test_persisted_scheduler_cancel(make_persisted_scheduler):
         scheduler.cancel(event)
 
     assert len(scheduler.events) == 0
+    assert_event_file("")
+
+
+def test_scheduler_thread_cancel(make_scheduler_thread):
+    '''
+    Test cancelling events on the scheduler thread
+    '''
+    scheduler_thread = make_scheduler_thread(EVENTS_DATA)
+
+    scheduler_thread.cancel(1706514300.0, start, (1,), {"foo": "bar"})
+    scheduler_thread.cancel(1706517900.0, stop, (1,), {"foo": "bar"})
+
+    assert len(scheduler_thread.events) == 0
     assert_event_file("")
