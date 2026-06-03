@@ -3,7 +3,7 @@ import pytest
 
 from kang.cms_error import CmsError
 
-import kang.sim800
+import kang.sim
 
 
 def test_readsms_unsolicited():
@@ -22,7 +22,7 @@ def test_readsms_unsolicited():
     ]
     mock_sim = MagicMock()
     mock_sim.readline.side_effect = data
-    sms = kang.sim800.Sms.read(mock_sim, "0")
+    sms = kang.sim.Sms.read(mock_sim, "0")
     assert "+1234567890" == sms.number
     assert "Arrêter" == sms.message
 
@@ -38,7 +38,7 @@ def test_readsms_error():
     mock_sim.readline.side_effect = data
 
     with pytest.raises(CmsError) as excinfo:
-        kang.sim800.Sms.read(mock_sim, "0")
+        kang.sim.Sms.read(mock_sim, "0")
 
     assert excinfo.type is CmsError
     assert "29" == excinfo.value.code
@@ -60,7 +60,7 @@ def test_sendsms_errors():
     ]
     mock_sim = MagicMock()
     mock_sim.readline.side_effect = data
-    sms = kang.sim800.Sms("+1234567890", "Test message")
+    sms = kang.sim.Sms("+1234567890", "Test message")
 
     with pytest.raises(CmsError) as excinfo:
         sms.send(mock_sim)
@@ -80,14 +80,14 @@ def test_sendsms_valid():
     ]
     mock_sim = MagicMock()
     mock_sim.readline.side_effect = data
-    sms = kang.sim800.Sms("+1234567890", "Test message")
+    sms = kang.sim.Sms("+1234567890", "Test message")
 
     sms.send(mock_sim)
 
     expected_writes = [
         call(b'AT+CMGS="002b0031003200330034003500360037003800390030"\n'),
         call(b"00540065007300740020006d006500730073006100670065"),
-        call(b"\x1A"),
+        call(b"\x1a"),
     ]
 
     assert expected_writes == mock_sim.write.call_args_list

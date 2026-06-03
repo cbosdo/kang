@@ -11,9 +11,9 @@ from json import dumps as _dumps
 from test.conftest import start, stop
 
 
-@patch("kang.sim800")
+@patch("kang.sim")
 @patch("kang.relays")
-def test_start(mock_relays, mock_sim800, make_sms):
+def test_start(mock_relays, mock_sim, make_sms):
     """
     Test the processing of command Démarrer
     """
@@ -27,13 +27,13 @@ def test_start(mock_relays, mock_sim800, make_sms):
     mock_relays.start.assert_called_with(mock_relays.HALL)
 
     # Test that the confirmation SMS is sent back
-    mock_sim800.Sms.assert_called_with("+33123456789", "Démarré dans l'église, le hall")
-    mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)
+    mock_sim.Sms.assert_called_with("+33123456789", "Démarré dans l'église, le hall")
+    mock_sim.Sms.return_value.send.assert_called_with(mock_sim)
 
 
-@patch("kang.sim800")
+@patch("kang.sim")
 @patch("kang.relays")
-def test_start_place(mock_relays, mock_sim800, make_sms, place):
+def test_start_place(mock_relays, mock_sim, make_sms, place):
     """
     Test the processing of the command Démarrer in specific places
     """
@@ -52,13 +52,13 @@ def test_start_place(mock_relays, mock_sim800, make_sms, place):
     call(not_called) not in mock_relays.start.method_calls
 
     # Test that the confirmation SMS is sent back
-    mock_sim800.Sms.assert_called_once_with("+33123456789", "Démarré dans " + place)
-    mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)
+    mock_sim.Sms.assert_called_once_with("+33123456789", "Démarré dans " + place)
+    mock_sim.Sms.return_value.send.assert_called_with(mock_sim)
 
 
-@patch("kang.sim800")
+@patch("kang.sim")
 @patch("kang.relays")
-def test_stop(mock_relays, mock_sim800, make_sms):
+def test_stop(mock_relays, mock_sim, make_sms):
     """
     Test the processing of command Arrêter
     """
@@ -72,13 +72,13 @@ def test_stop(mock_relays, mock_sim800, make_sms):
     mock_relays.stop.assert_called_with(mock_relays.HALL)
 
     # Test that the confirmation SMS is sent back
-    mock_sim800.Sms.assert_called_with("+33123456789", "Arrêté dans l'église, le hall")
-    mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)
+    mock_sim.Sms.assert_called_with("+33123456789", "Arrêté dans l'église, le hall")
+    mock_sim.Sms.return_value.send.assert_called_with(mock_sim)
 
 
-@patch("kang.sim800")
+@patch("kang.sim")
 @patch("kang.relays")
-def test_stop_place(mock_relays, mock_sim800, make_sms, place):
+def test_stop_place(mock_relays, mock_sim, make_sms, place):
     """
     Test the processing of the command Arrêter in specific places
     """
@@ -97,13 +97,13 @@ def test_stop_place(mock_relays, mock_sim800, make_sms, place):
     call(not_called) not in mock_relays.stop.method_calls
 
     # Test that the confirmation SMS is sent back
-    mock_sim800.Sms.assert_called_with("+33123456789", "Arrêté dans " + place)
-    mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)
+    mock_sim.Sms.assert_called_with("+33123456789", "Arrêté dans " + place)
+    mock_sim.Sms.return_value.send.assert_called_with(mock_sim)
 
 
-@patch("kang.sim800")
+@patch("kang.sim")
 @patch("kang.relays")
-def test_command_lenient(mock_relays, mock_sim800, make_sms):
+def test_command_lenient(mock_relays, mock_sim, make_sms):
     """
     Test the processing of commands with variations of accents, added spaces, different caps
     """
@@ -117,15 +117,15 @@ def test_command_lenient(mock_relays, mock_sim800, make_sms):
     mock_relays.start.assert_called_with(mock_relays.HALL)
 
     # Test that the confirmation SMS is sent back
-    mock_sim800.Sms.assert_called_with("+33123456789", "Démarré dans l'église, le hall")
-    mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)
+    mock_sim.Sms.assert_called_with("+33123456789", "Démarré dans l'église, le hall")
+    mock_sim.Sms.return_value.send.assert_called_with(mock_sim)
 
 
 def dumps_wapper(*args, **kwargs):
     return _dumps(*args, **(kwargs | {"default": lambda obj: "mock"}))
 
 
-@patch("kang.sim800")
+@patch("kang.sim")
 @patch("kang.relays")
 @patch("kang.kang.scheduler_thread")
 @pytest.mark.parametrize(
@@ -143,7 +143,7 @@ def dumps_wapper(*args, **kwargs):
     ],
 )
 def test_add_schedule(
-    mock_scheduler, mock_relays, mock_sim800, make_sms, pattern, duration
+    mock_scheduler, mock_relays, mock_sim, make_sms, pattern, duration
 ):
     """
     Test the processing of start command with schedule under various forms
@@ -183,29 +183,26 @@ def test_add_schedule(
     )
 
     # Test that the confirmation SMS is sent back
-    mock_sim800.Sms.assert_called_with(
-        "+33123456789", "Programmé dans l'église, le hall"
-    )
-    mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)
+    mock_sim.Sms.assert_called_with("+33123456789", "Programmé dans l'église, le hall")
+    mock_sim.Sms.return_value.send.assert_called_with(mock_sim)
 
 
-@patch("kang.sim800")
-def test_cancel_schedule(
-    mock_sim800, make_sms, make_scheduler_thread
-):
-    '''
+@patch("kang.sim")
+def test_cancel_schedule(mock_sim, make_sms, make_scheduler_thread):
+    """
     Test the processing of the cancel command
-    '''
+    """
     mock_sim = MagicMock()
-    mock_sms = make_sms("+33123456789", "Annuler dans l'église le 29 janvier 2024 à 8:45 pendant 1h")
+    mock_sms = make_sms(
+        "+33123456789", "Annuler dans l'église le 29 janvier 2024 à 8:45 pendant 1h"
+    )
 
     current_locale = locale.setlocale(locale.LC_ALL)
     locale.setlocale(locale.LC_ALL, "fr_FR")
 
-
-    data = '''1706514300.0,10,start,[22],{}
+    data = """1706514300.0,10,start,[22],{}
 1706517900.0,10,stop,[22],{}
-'''
+"""
     scheduler_thread = make_scheduler_thread(data)
     kang.kang.scheduler_thread = scheduler_thread
 
@@ -215,15 +212,13 @@ def test_cancel_schedule(
     locale.setlocale(locale.LC_ALL, current_locale)
 
     # Test that the confirmation SMS is sent back
-    mock_sim800.Sms.assert_called_with(
-        "+33123456789", "Démarrage et arrêt annulés"
-    )
-    mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)
+    mock_sim.Sms.assert_called_with("+33123456789", "Démarrage et arrêt annulés")
+    mock_sim.Sms.return_value.send.assert_called_with(mock_sim)
 
 
 @patch("kang.kang.subprocess")
-@patch("kang.sim800")
-def test_version(mock_sim800, mock_subprocess, make_sms):
+@patch("kang.sim")
+def test_version(mock_sim, mock_subprocess, make_sms):
     """
     Test the processing of command version
     """
@@ -238,5 +233,5 @@ def test_version(mock_sim800, mock_subprocess, make_sms):
     kang.kang.process_command(mock_sms, mock_sim)
 
     # Test that the result SMS is sent back
-    mock_sim800.Sms.assert_called_with("+33123456789", "Fake version")
-    mock_sim800.Sms.return_value.send.assert_called_with(mock_sim)
+    mock_sim.Sms.assert_called_with("+33123456789", "Fake version")
+    mock_sim.Sms.return_value.send.assert_called_with(mock_sim)

@@ -21,7 +21,7 @@ def fireATCommand(sim, command):
     @param sim: the SIM serial handle
     @param command: the AT command to send as a string without the newline
     """
-    sim.write(b"%s\n" % command.encode("ascii"))
+    sim.write(b"%s\r\n" % command.encode("ascii"))
 
     # Reading empty line and status
     sim.readline()
@@ -34,7 +34,7 @@ def getTime(sim):
 
     @param sim: the SIM serial handle
     """
-    sim.write(b"AT+CCLK?\n")
+    sim.write(b"AT+CCLK?\r\n")
     line = sim.readline()
     res = None
     while not line.endswith(b"OK\r\n"):
@@ -90,7 +90,7 @@ class Sms:
         log.debug("Sending SMS to %s: %s", self.number, self.message)
         sim.write(b'AT+CMGS="%s"\n' % stringtoucs2(self.number))
         sim.write(stringtoucs2(self.message))
-        sim.write(b"\x1A")
+        sim.write(b"\x1a")
 
         # Discard the output lines
         line = sim.readline()
@@ -146,7 +146,7 @@ def getAllSmsIds(sim):
     @param sim: the SIM serial handle
     @return: the list of identifiers for the available messages
     """
-    sim.write(b'AT+CMGL="ALL"\n')
+    sim.write(b'AT+CMGL="ALL"\r\n')
     messages = []
     time.sleep(0.5)
     line = sim.readline()
@@ -168,10 +168,21 @@ def setup(dev="/dev/ttyAMA0"):
     @param dev: the serial device path. /dev/ttyAMA0 as default should work fine
     @return: the initialized sim handle
     """
-    sim = serial.Serial(dev, 9600, timeout=5)
+    sim = serial.Serial(dev, 115200, timeout=5)
     fireATCommand(sim, "AT")
     fireATCommand(sim, "ATE0")  # Disable echo
-    fireATCommand(sim, "AT+CLTS=1")  # Enable auto network time sync
+
+    # Enable automatic local network time zone report
+    fireATCommand(sim, "AT+CTZU=1")
+
+    # Force a quick toggle of network functionality to grab the NITZ time packet immediately
+    fireATCommand(sim, "AT+CFUN=0")
+    time.sleep(2)
+    fireATCommand(sim, "AT+CFUN=1")
+
+    # Wait a few seconds for network re-attachment before proceeding
+    time.sleep(5)
+
     fireATCommand(sim, "AT+CMGF=1")  # Setting text mode
     fireATCommand(sim, "AT+CNMI=1,0,0,0,0")  # Don't get the unsolicited notifications
     fireATCommand(sim, 'AT+CSCS="UCS2"')  # Receive all data at UCS2
@@ -180,5 +191,5 @@ def setup(dev="/dev/ttyAMA0"):
     )  # Change SMS Data Coding Scheme to 8 for Unicode
     fireATCommand(sim, "AT&W")  # Save parameters for next restart
 
-    logging.info("SIM800 ready to be used")
+    logging.info("SIM800 ready and network time synchronized")
     return sim

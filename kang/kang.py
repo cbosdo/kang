@@ -4,7 +4,7 @@
 from kang.cms_error import CmsError
 import kang.relays
 import kang.scheduler
-import kang.sim800
+import kang.sim
 
 import datetime
 import json
@@ -203,14 +203,14 @@ def version(dest):
             version = "unknown version"
         else:
             version = process.stdout.strip()
-    return kang.sim800.Sms(dest, version)
+    return kang.sim.Sms(dest, version)
 
 
 def thanks(dest):
     """
     Be polite
     """
-    return kang.sim800.Sms(dest, "De rien !")
+    return kang.sim.Sms(dest, "De rien !")
 
 
 def help(dest, matcher):
@@ -220,7 +220,7 @@ def help(dest, matcher):
     :param dest: number to send the SMS to
     """
     commands_help = {
-        f"\u25AA Aide {cmd.get('help_group')}"
+        f"\u25aa Aide {cmd.get('help_group')}"
         for cmd in COMMANDS
         if cmd.get("help_group")
     }
@@ -230,7 +230,7 @@ def help(dest, matcher):
             group = re.sub(pattern, repl, group)
 
         commands_help = [
-            "\u25AA {}".format(cmd["command"])
+            "\u25aa {}".format(cmd["command"])
             for cmd in COMMANDS
             if cmd.get("help_group") == group
         ]
@@ -238,7 +238,7 @@ def help(dest, matcher):
     message = "Taper une des {} commandes suivantes:\n{}".format(
         len(commands_help), "\n".join(commands_help)
     )
-    return kang.sim800.Sms(dest, message)
+    return kang.sim.Sms(dest, message)
 
 
 def _get_places(matcher):
@@ -295,7 +295,7 @@ def start_heating(dest, matcher=None):
     for place in places:
         kang.relays.start(place)
 
-    return kang.sim800.Sms(
+    return kang.sim.Sms(
         dest, "Démarré dans {}".format(", ".join(_format_places(places)))
     )
 
@@ -311,7 +311,7 @@ def stop_heating(dest, matcher=None):
     for place in places:
         kang.relays.stop(place)
 
-    return kang.sim800.Sms(
+    return kang.sim.Sms(
         dest, "Arrêté dans {}".format(", ".join(_format_places(places)))
     )
 
@@ -335,7 +335,7 @@ def schedule_heating(dest, matcher):
         scheduler_thread.enterabs(start_time, 0, kang.relays.start, argument=(place,))
         scheduler_thread.enterabs(stop_time, 0, kang.relays.stop, argument=(place,))
 
-    return kang.sim800.Sms(
+    return kang.sim.Sms(
         dest, "Programmé dans {}".format(", ".join(_format_places(places)))
     )
 
@@ -377,15 +377,13 @@ def cancel_heating(dest, matcher):
 
     if errors:
         error_messages = [
-            "\u25AA {}: {}\n".format(
+            "\u25aa {}: {}\n".format(
                 _format_places([place])[0], ", ".join(errors[place])
             )
             for place in errors.keys()
         ]
-        return kang.sim800.Sms(
-            dest, "Annulé sauf:\n{}".format(",".join(error_messages))
-        )
-    return kang.sim800.Sms(dest, "Démarrage et arrêt annulés")
+        return kang.sim.Sms(dest, "Annulé sauf:\n{}".format(",".join(error_messages)))
+    return kang.sim.Sms(dest, "Démarrage et arrêt annulés")
 
 
 def cut(l, n):
@@ -409,7 +407,7 @@ def list_events(dest):
         chunks = cut(events, 4)
         for i, batch in enumerate(chunks):
             events_message = [
-                "\u25AA {}: {} - {}".format(
+                "\u25aa {}: {} - {}".format(
                     time.strftime("%d/%m/%Y %H:%M", time.localtime(event.time)),
                     name_map[event.action],
                     "".join(_format_places(event.argument)),
@@ -417,7 +415,7 @@ def list_events(dest):
                 for event in batch
             ]
             messages.append(
-                kang.sim800.Sms(
+                kang.sim.Sms(
                     dest,
                     "Programmation {}/{}:\n{}".format(
                         i + 1, len(chunks), "\n".join(events_message)
@@ -425,7 +423,7 @@ def list_events(dest):
                 )
             )
         return messages
-    return kang.sim800.Sms(dest, "Aucune programmation")
+    return kang.sim.Sms(dest, "Aucune programmation")
 
 
 def add_authorized(dest, matcher):
@@ -446,13 +444,13 @@ def add_authorized(dest, matcher):
     with open(AUTH_FILE, "r+") as auth_fd:
         all_numbers = auth_fd.readlines()
         if "{}\n".format(new_number) in all_numbers:
-            return kang.sim800.Sms(dest, "Numéro déjà autorisé")
+            return kang.sim.Sms(dest, "Numéro déjà autorisé")
 
         all_numbers.append("{}\n".format(new_number))
         auth_fd.seek(0)
         auth_fd.write("".join(all_numbers))
         auth_fd.truncate()
-    return kang.sim800.Sms(dest, "Numéro ajouté")
+    return kang.sim.Sms(dest, "Numéro ajouté")
 
 
 def remove_authorized(dest, matcher):
@@ -473,13 +471,13 @@ def remove_authorized(dest, matcher):
     with open(AUTH_FILE, "r+") as auth_fd:
         all_numbers = auth_fd.readlines()
         if "{}\n".format(number) not in all_numbers:
-            return kang.sim800.Sms(dest, "Numéro déjà pas autorisé")
+            return kang.sim.Sms(dest, "Numéro déjà pas autorisé")
 
         all_numbers.remove("{}\n".format(number))
         auth_fd.seek(0)
         auth_fd.write("".join(all_numbers))
         auth_fd.truncate()
-    return kang.sim800.Sms(dest, "Numéro supprimé")
+    return kang.sim.Sms(dest, "Numéro supprimé")
 
 
 def list_authorized(dest):
@@ -501,9 +499,9 @@ def list_authorized(dest):
         messages = []
         chunks = cut(all_numbers, 10)
         for i, batch in enumerate(chunks):
-            message_body = ["\u25AA " + number for number in batch]
+            message_body = ["\u25aa " + number for number in batch]
             messages.append(
-                kang.sim800.Sms(
+                kang.sim.Sms(
                     dest,
                     "Numéros autorisés {}/{}:\n{}".format(
                         i + 1, len(chunks), "\n".join(message_body)
@@ -518,7 +516,7 @@ def show_date(dest):
     Output the current date and time of the system
     """
     now = datetime.datetime.now().isoformat(sep=" ", timespec="seconds")
-    return kang.sim800.Sms(dest, now)
+    return kang.sim.Sms(dest, now)
 
 
 def process_command(sms, sim):
@@ -557,7 +555,7 @@ def process_command(sms, sim):
                     log.error("Failed to send SMS to %s: %s", response.number, err)
             break
     if not processed:
-        kang.sim800.Sms(
+        kang.sim.Sms(
             sms.number,
             "Commande inconnue, envoyer 'aide' pour vérifier les commandes disponibles",
         )
@@ -580,11 +578,11 @@ def main():
     locale.setlocale(locale.LC_ALL, "fr_FR.utf-8")
     config = load_configuration()
     log.info("Starting")
-    sim = kang.sim800.setup()
+    sim = kang.sim.setup()
     kang.relays.setup()
 
     # Set the time from the GSM network
-    now = kang.sim800.getTime(sim)
+    now = kang.sim.getTime(sim)
     if now:
         setTime(now)
 
@@ -594,10 +592,10 @@ def main():
     while True:
         sms = None
         try:
-            ids = kang.sim800.getAllSmsIds(sim)
+            ids = kang.sim.getAllSmsIds(sim)
             for idx in ids:
                 try:
-                    sms = kang.sim800.Sms.read(sim, idx)
+                    sms = kang.sim.Sms.read(sim, idx)
                     if is_authorized(sms.number):
                         process_command(sms, sim)
                     else:
@@ -605,7 +603,7 @@ def main():
                 finally:
                     # Remove the message to avoid processing twice
                     # Also remove if the message triggered an error while processing
-                    kang.sim800.Sms.delete(sim, idx)
+                    kang.sim.Sms.delete(sim, idx)
 
                 # How frequent do we need to check? are 15s OK?
                 time.sleep(15)
@@ -619,7 +617,7 @@ def main():
             )
             for admin in config.get("admins", []):
                 try:
-                    kang.sim800.Sms(admin, message).send(sim)
+                    kang.sim.Sms(admin, message).send(sim)
                 except CmsError as cms_err:
                     log.error("Failed to send SMS to %s: %s", admin, cms_err)
             # We want to stay alive as much as possible, log errors and continue
