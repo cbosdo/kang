@@ -88,7 +88,7 @@ class Sms:
         @param sim: the SIM serial handle
         """
         log.debug("Sending SMS to %s: %s", self.number, self.message)
-        sim.write(b'AT+CMGS="%s"\n' % stringtoucs2(self.number))
+        sim.write(b'AT+CMGS="%s"\r\n' % stringtoucs2(self.number))
         sim.write(stringtoucs2(self.message))
         sim.write(b"\x1a")
 
@@ -108,6 +108,7 @@ class Sms:
         @param idx: the SMS internal index
         @return: an SMS object
         """
+        sim.reset_input_buffer()
         sim.write(b"AT+CMGR=%s\n" % idx.encode("ascii"))
         msg = b""
         line = None
@@ -124,7 +125,8 @@ class Sms:
         except:
             log.error("Message encoding error")
         matcher = re.search(
-            rb'\+CMGR: "[^"]*","([^"]+)","[^"]*","([^"]+)"\r\n([0-9A-Fa-f]+)', msg
+            rb'\+CMG[RL]: [^,]+,"([^"]+)","[^"]*","(?:[^"]*)","([^"]+)"(?:\r\n)?([0-9A-Fa-f]+)',
+            msg,
         )
         if not matcher:
             raise Exception("Failed to parse SMS: " + msg.decode("ascii"))
@@ -191,5 +193,5 @@ def setup(dev="/dev/ttyAMA0"):
     )  # Change SMS Data Coding Scheme to 8 for Unicode
     fireATCommand(sim, "AT&W")  # Save parameters for next restart
 
-    logging.info("SIM800 ready and network time synchronized")
+    logging.info("SIM7600 ready and network time synchronized")
     return sim
