@@ -220,9 +220,7 @@ def help(dest, matcher):
     :param dest: number to send the SMS to
     """
     commands_help = {
-        f"\u25aa Aide {cmd.get('help_group')}"
-        for cmd in COMMANDS
-        if cmd.get("help_group")
+        f"- Aide {cmd.get('help_group')}" for cmd in COMMANDS if cmd.get("help_group")
     }
     if matcher.group(1):
         group = matcher.group(1).lower()
@@ -230,7 +228,7 @@ def help(dest, matcher):
             group = re.sub(pattern, repl, group)
 
         commands_help = [
-            "\u25aa {}".format(cmd["command"])
+            "- {}".format(cmd["command"])
             for cmd in COMMANDS
             if cmd.get("help_group") == group
         ]
@@ -377,9 +375,7 @@ def cancel_heating(dest, matcher):
 
     if errors:
         error_messages = [
-            "\u25aa {}: {}\n".format(
-                _format_places([place])[0], ", ".join(errors[place])
-            )
+            "- {}: {}\n".format(_format_places([place])[0], ", ".join(errors[place]))
             for place in errors.keys()
         ]
         return kang.sim.Sms(dest, "Annulé sauf:\n{}".format(",".join(error_messages)))
@@ -407,7 +403,7 @@ def list_events(dest):
         chunks = cut(events, 4)
         for i, batch in enumerate(chunks):
             events_message = [
-                "\u25aa {}: {} - {}".format(
+                "- {}: {} - {}".format(
                     time.strftime("%d/%m/%Y %H:%M", time.localtime(event.time)),
                     name_map[event.action],
                     "".join(_format_places(event.argument)),
@@ -499,7 +495,7 @@ def list_authorized(dest):
         messages = []
         chunks = cut(all_numbers, 10)
         for i, batch in enumerate(chunks):
-            message_body = ["\u25aa " + number for number in batch]
+            message_body = ["- " + number for number in batch]
             messages.append(
                 kang.sim.Sms(
                     dest,
@@ -612,8 +608,10 @@ def main():
             break
         except Exception as err:
             log.debug("admins {}".format(config.get("admins", [])))
-            message = "Erreur inattendue: veuillez consulter les logs.\n \u2023 {}: {}".format(
-                type(err).__name__, err
+            message = (
+                "Erreur inattendue: veuillez consulter les logs.\n > {}: {}".format(
+                    type(err).__name__, err
+                )
             )
             for admin in config.get("admins", []):
                 try:
