@@ -179,7 +179,6 @@ def getAllSmsIds(sim):
     while not line.endswith(b"OK\r\n"):
         time.sleep(0.5)
         matcher = re.match(rb"^\+CMGL:\s*([0-9]+),", line)
-        log.debug("Listed message: %s", line)
         if matcher:
             messages.append(matcher.group(1).decode("ascii"))
         line = sim.readline()
